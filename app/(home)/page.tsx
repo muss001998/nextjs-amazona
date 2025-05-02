@@ -4,7 +4,7 @@ import data from '@/lib/data'
 import { toSlug } from '@/lib/utils'
 import { HomeCard } from '@/components/shared/home/home-card'
 import { Card, CardContent } from '@/components/ui/card'
-import Product from '@/lib/db/models/product.model'
+//import Product from '@/lib/db/models/product.model'
 import ProductSlider from '@/components/shared/product/product-slider'
 import { get } from 'http'
 
