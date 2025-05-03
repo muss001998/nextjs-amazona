@@ -6,6 +6,7 @@ import { HomeCard } from '@/components/shared/home/home-card'
 import { Card, CardContent } from '@/components/ui/card'
 //import Product from '@/lib/db/models/product.model'
 import ProductSlider from '@/components/shared/product/product-slider'
+import BrowsingHistoryList from '@/components/shared/browsing-history-list'
 //import { get } from 'http'
 
 export default async function Page() {
@@ -86,6 +87,9 @@ export default async function Page() {
           </CardContent>
         </Card>
 
+      </div>
+      <div className='p-4 bg-background'>
+        <BrowsingHistoryList />
       </div>
     </>
   )
