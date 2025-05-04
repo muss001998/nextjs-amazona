@@ -112,6 +112,11 @@
   --sidebar-ring: oklch(0.554 0.135 66.442);
 }
 
+.destructive-toast {
+  background-color: #f44336; /* Red background */
+  color: white; /* White text */
+  border: 1px solid #d32f2f; /* Darker red border */
+}
 
 
 @layer base {

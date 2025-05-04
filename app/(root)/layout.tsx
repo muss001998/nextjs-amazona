@@ -1,4 +1,5 @@
 import React from 'react'
+import { Toaster } from 'sonner' // adjust path if needed
 
 import Header from '@/components/shared/header'
 import Footer from '@/components/shared/footer'
@@ -13,6 +14,7 @@ export default async function RootLayout({
       <Header />
       <main className='flex-1 flex flex-col p-4'>{children}</main>
       <Footer />
+      <Toaster /> {/* 👈 This enables toast notifications globally */}
     </div>
   )
 }
