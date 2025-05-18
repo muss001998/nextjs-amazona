@@ -2,6 +2,8 @@ import React from 'react'
 
 import Header from '@/components/shared/header'
 import Footer from '@/components/shared/footer'
+import { Toaster } from '@/components/ui/toaster'
+
 
 export default async function RootLayout({
   children,
@@ -13,6 +15,7 @@ export default async function RootLayout({
       <Header />
       <main className='flex-1 flex flex-col p-4'>{children}</main>
       <Footer />
+      <Toaster /> {/* ✅ Add this at the end */}
     </div>
   )
 }
