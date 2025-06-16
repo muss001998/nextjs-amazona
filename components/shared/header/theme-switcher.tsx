@@ -28,18 +28,20 @@ export default function ThemeSwitcher() {
   const isMounted = useIsMounted()
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className='header-button h-[41px]'>
-        {theme === 'dark' && isMounted ? (
-          <div className='flex items-center gap-1'>
-            <Moon className='h-4 w-4' /> Dark <ChevronDownIcon />
-          </div>
-        ) : (
-          <div className='flex items-center gap-1'>
-            <Sun className='h-4 w-4' /> Light
-            <ChevronDownIcon />
-          </div>
-        )}
+      <DropdownMenuTrigger asChild>
+        <button className='header-button h-[41px]'>
+          {theme === 'dark' && isMounted ? (
+            <div className='flex items-center gap-1'>
+              <Moon className='h-4 w-4' /> Dark <ChevronDownIcon />
+            </div>
+          ) : (
+            <div className='flex items-center gap-1'>
+              <Sun className='h-4 w-4' /> Light <ChevronDownIcon />
+            </div>
+          )}
+        </button>
       </DropdownMenuTrigger>
+
       <DropdownMenuContent className='w-56'>
         <DropdownMenuLabel>Theme</DropdownMenuLabel>
 
