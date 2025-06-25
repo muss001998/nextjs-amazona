@@ -13,6 +13,7 @@ export const browsingHistoryStore = create<BrowsingHistory>()(
   })
 )
 
+
 export default function useBrowsingHistory() {
   const { products } = browsingHistoryStore()
   return {
