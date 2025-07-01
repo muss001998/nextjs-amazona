@@ -24,11 +24,11 @@ export default function Footer() {
   const locale = useLocale()
   const t = useTranslations()
   return (
-    <footer className='bg-black  text-white underline-link'>
+    <footer className='bg-gradient-to-r from-[#7f1d1d] to-[#ea580c] text-[#fff7ed]'>
       <div className='w-full'>
         <Button
           variant='ghost'
-          className='bg-gray-800 w-full  rounded-none '
+          className='bg-[#facc15] hover:bg-[#fbbf24] text-black w-full rounded-none font-semibold transition-colors duration-200'
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
         >
           <ChevronUp className='mr-2 h-4 w-4' />
@@ -39,13 +39,13 @@ export default function Footer() {
             <h3 className='font-bold mb-2'>{t('Footer.Get to Know Us')}</h3>
             <ul className='space-y-2'>
               <li>
-                <Link href='/page/careers'>{t('Footer.Careers')}</Link>
+                <Link className='hover:text-[#D4AF37] transition-colors duration-200' href='/page/careers'>{t('Footer.Careers')}</Link>
               </li>
               <li>
-                <Link href='/page/blog'>{t('Footer.Blog')}</Link>
+                <Link className='hover:text-[#D4AF37] transition-colors duration-200' href='/page/blog'>{t('Footer.Blog')}</Link>
               </li>
               <li>
-                <Link href='/page/about-us'>
+                <Link className='hover:text-[#D4AF37] transition-colors duration-200' href='/page/about-us'>
                   {t('Footer.About name', { name: site.name })}
                 </Link>
               </li>
@@ -55,17 +55,17 @@ export default function Footer() {
             <h3 className='font-bold mb-2'>{t('Footer.Make Money with Us')}</h3>
             <ul className='space-y-2'>
               <li>
-                <Link href='/page/sell'>
+                <Link className='hover:text-[#D4AF37] transition-colors duration-200' href='/page/sell'>
                   {t('Footer.Sell products on', { name: site.name })}
                 </Link>
               </li>
               <li>
-                <Link href='/page/become-affiliate'>
+                <Link className='hover:text-[#D4AF37] transition-colors duration-200' href='/page/become-affiliate'>
                   {t('Footer.Become an Affiliate')}
                 </Link>
               </li>
               <li>
-                <Link href='/page/advertise'>
+                <Link className='hover:text-[#D4AF37] transition-colors duration-200' href='/page/advertise'>
                   {t('Footer.Advertise Your Products')}
                 </Link>
               </li>
@@ -75,22 +75,22 @@ export default function Footer() {
             <h3 className='font-bold mb-2'>{t('Footer.Let Us Help You')}</h3>
             <ul className='space-y-2'>
               <li>
-                <Link href='/page/shipping'>
+                <Link className='hover:text-[#D4AF37] transition-colors duration-200' href='/page/shipping'>
                   {t('Footer.Shipping Rates & Policies')}
                 </Link>
               </li>
               <li>
-                <Link href='/page/returns-policy'>
+                <Link className='hover:text-[#D4AF37] transition-colors duration-200' href='/page/returns-policy'>
                   {t('Footer.Returns & Replacements')}
                 </Link>
               </li>
               <li>
-                <Link href='/page/help'>{t('Footer.Help')}</Link>
+                <Link className='hover:text-[#D4AF37] transition-colors duration-200' href='/page/help'>{t('Footer.Help')}</Link>
               </li>
             </ul>
           </div>
         </div>
-        <div className='border-t border-gray-800'>
+        <div className='border-t border-yellow-400'>
           <div className='max-w-7xl mx-auto py-8 px-4 flex flex-col items-center space-y-4'>
             <div className='flex items-center space-x-4 flex-wrap md:flex-nowrap'>
               <Image
