@@ -31,23 +31,10 @@ const settingSchema = new Schema<ISetting>(
     },
     carousels: [
       {
-        title: {
-          type: String,
-          required: true,
-        },
-        url: {
-          type: String,
-          required: true,
-          unique: true,
-        },
-        image: {
-          type: String,
-          required: true,
-        },
-        buttonCaption: {
-          type: String,
-          required: true,
-        },
+        title: { type: String, required: true },
+        url: { type: String, required: true, unique: true },
+        image: { type: String, required: true },
+        buttonCaption: { type: String, required: true },
       },
     ],
     availableLanguages: [
@@ -77,7 +64,20 @@ const settingSchema = new Schema<ISetting>(
         },
       },
     ],
-    defaultCurrency: { type: String, required: true },
+
+    // ✅ Updated defaultCurrency to store full object
+    defaultCurrency: {
+      type: {
+        code: { type: String, required: true },
+        name: { type: String, required: true },
+        symbol: { type: String, required: true },
+        convertRate: { type: Number, required: true },
+      },
+      required: true,
+    },
+
+
+
     availablePaymentMethods: [
       {
         name: { type: String, required: true },
@@ -101,7 +101,6 @@ const settingSchema = new Schema<ISetting>(
 )
 
 const Setting =
-  (models.Setting as Model<ISetting>) ||
-  model<ISetting>('Setting', settingSchema)
+  (models.Setting as Model<ISetting>) || model<ISetting>('Setting', settingSchema)
 
 export default Setting

@@ -27,10 +27,18 @@ export default function LanguageSwitcher() {
     setting: { availableCurrencies, currency },
     setCurrency,
   } = useSettingStore()
-  const handleCurrencyChange = async (newCurrency: string) => {
-    await setCurrencyOnServer(newCurrency)
-    setCurrency(newCurrency)
+  const handleCurrencyChange = async (newCurrencyCode: string) => {
+    await setCurrencyOnServer(newCurrencyCode)
+  
+    const selectedCurrency = availableCurrencies.find(
+      (cur) => cur.code === newCurrencyCode
+    )
+  
+    if (selectedCurrency) {
+      setCurrency(selectedCurrency) // ✅ full object passed
+    }
   }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className='header-button h-[41px]'>
@@ -62,9 +70,10 @@ export default function LanguageSwitcher() {
 
         <DropdownMenuLabel>Currency</DropdownMenuLabel>
         <DropdownMenuRadioGroup
-          value={currency}
+          value={currency.code}
           onValueChange={handleCurrencyChange}
         >
+
           {availableCurrencies.map((c) => (
             <DropdownMenuRadioItem key={c.name} value={c.code}>
               {c.symbol} {c.code}

@@ -42,12 +42,18 @@ export default function CurrencyForm({
   const defaultCurrency = watch('defaultCurrency')
 
   useEffect(() => {
-    const validCodes = availableCurrencies.map((lang) => lang.code)
-    if (!validCodes.includes(defaultCurrency)) {
-      setValue('defaultCurrency', '')
+    const validCodes = availableCurrencies.map((cur) => cur.code)
+    if (!defaultCurrency || !validCodes.includes(defaultCurrency.code)) {
+      setValue('defaultCurrency', {
+        code: '',
+        name: '',
+        symbol: '',
+        convertRate: 1,
+      })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(availableCurrencies)])
+
 
   return (
     <Card id={id}>
@@ -160,8 +166,15 @@ export default function CurrencyForm({
               <FormLabel>Default Currency</FormLabel>
               <FormControl>
                 <Select
-                  value={field.value || ''}
-                  onValueChange={(value) => field.onChange(value)}
+                  value={field.value?.code || ''}
+                  onValueChange={(code) => {
+                    const currencyObj = availableCurrencies.find(
+                      (cur) => cur.code === code
+                    )
+                    if (currencyObj) {
+                      field.onChange(currencyObj)
+                    }
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder='Select a currency' />
@@ -169,9 +182,9 @@ export default function CurrencyForm({
                   <SelectContent>
                     {availableCurrencies
                       .filter((x) => x.code)
-                      .map((lang, index) => (
-                        <SelectItem key={index} value={lang.code}>
-                          {lang.name} ({lang.code})
+                      .map((cur, index) => (
+                        <SelectItem key={index} value={cur.code}>
+                          {cur.name} ({cur.code})
                         </SelectItem>
                       ))}
                   </SelectContent>
@@ -181,6 +194,7 @@ export default function CurrencyForm({
             </FormItem>
           )}
         />
+
       </CardContent>
     </Card>
   )

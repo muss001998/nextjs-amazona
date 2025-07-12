@@ -291,7 +291,12 @@ export const SettingInputSchema = z.object({
   availableCurrencies: z
     .array(SiteCurrencySchema)
     .min(1, 'At least one currency is required'),
-  defaultCurrency: z.string().min(1, 'Currency is required'),
+  defaultCurrency: z.object({
+      code: z.string(),
+      name: z.string(),
+      symbol: z.string(),
+      convertRate: z.number(),
+    }),
   availablePaymentMethods: z
     .array(PaymentMethodSchema)
     .min(1, 'At least one payment method is required'),

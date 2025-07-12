@@ -128,12 +128,16 @@ export default function Footer() {
                 </SelectContent>
               </Select>
               <Select
-                value={currency}
+                value={currency.code}
                 onValueChange={(value) => {
-                  setCurrency(value)
-                  window.scrollTo(0, 0)
+                  const selectedCurrency = availableCurrencies.find((cur) => cur.code === value)
+                  if (selectedCurrency) {
+                    setCurrency(selectedCurrency)
+                    window.scrollTo(0, 0)
+                  }
                 }}
               >
+
                 <SelectTrigger>
                   <SelectValue placeholder={t('Footer.Select a currency')} />
                 </SelectTrigger>
