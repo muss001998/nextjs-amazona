@@ -1,27 +1,23 @@
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
+import { redirect, notFound } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import type { NextPage } from 'next';
-import { NextRequest, NextResponse } from 'next/server';
 
-interface PageProps {
-  params: {
-    locale: string;
-    id: string;
-  };
-  searchParams: {
-    reference?: string;
-  };
-  request: NextRequest; // Add NextRequest
-  response: NextResponse; // Add NextResponse
+interface PageParams {
+  locale: string;
+  id: string;
 }
 
-const PaystackSuccessPage: NextPage<PageProps> = async ({ params, searchParams, request, response }) => { // Add request and response
-  const { id, locale } = params;
-  const { reference } = searchParams;
+interface PageProps {
+  params: Promise<PageParams>;
+  searchParams: Promise<{ reference?: string }>;
+}
 
-  console.log("Request:", request); // Use the request variable
-  console.log("Response:", response); // Use the response variable
+const PaystackSuccessPage = async (props: PageProps) => {
+  const params = await props.params;
+  const { id, locale } = params;
+
+  const searchParams = await props.searchParams;
+  const reference = searchParams.reference;
 
   if (!reference) {
     return redirect(`/${locale}/checkout/${id}`);
@@ -43,7 +39,9 @@ const PaystackSuccessPage: NextPage<PageProps> = async ({ params, searchParams, 
       data.isSuccess === true && data.order && data.order._id === id;
 
     if (!isSuccess) {
-      return redirect(`/${locale}/checkout/${id}`);
+      //  Added notFound() here
+      notFound();
+      //return redirect(`/${locale}/checkout/${id}`);
     }
 
     return (
