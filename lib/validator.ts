@@ -132,7 +132,15 @@ export const OrderInputSchema = z.object({
   deliveredAt: z.date().optional(),
   isPaid: z.boolean().default(false),
   paidAt: z.date().optional(),
+
+  // ✅ Add this:
+  currency: z.object({
+    code: z.string(),
+    symbol: z.string(),
+    convertRate: z.number(),
+  }),
 })
+
 // Cart
 
 export const CartSchema = z.object({
@@ -147,7 +155,17 @@ export const CartSchema = z.object({
   shippingAddress: z.optional(ShippingAddressSchema),
   deliveryDateIndex: z.optional(z.number()),
   expectedDeliveryDate: z.optional(z.date()),
+
+  // ✅ Add this
+  currency: z
+    .object({
+      code: z.string(),
+      symbol: z.string(),
+      convertRate: z.number(),
+    })
+    .optional(),
 })
+
 
 // USER
 const UserName = z

@@ -162,6 +162,11 @@ const generateOrder = async (
     deliveredAt: calculatePastDate(i),
     createdAt: calculatePastDate(i),
     expectedDeliveryDate: calculateFutureDate(i % 2),
+    currency: {  // Add the currency property here
+      symbol: '$',  // Replace with your currency symbol
+      code: 'USD',   // Replace with your currency code
+      convertRate: 1, // Replace with your conversion rate
+    },
     ...calcDeliveryDateAndPriceForSeed({
       items: items,
       shippingAddress: data.users[i % users.length].address,

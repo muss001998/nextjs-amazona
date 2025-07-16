@@ -34,14 +34,16 @@ export async function generateMetadata() {
   }
 }
 
+// ✅ Use `params: Promise<{ locale: string }>`
 export default async function AppLayout({
-  params,
+  params: paramsPromise,
   children,
 }: {
-  params: { locale: string }
+  params: Promise<{ locale: string }>
   children: React.ReactNode
 }) {
-  const locale = params.locale
+  // ✅ Await the params
+  const { locale } = await paramsPromise
 
   if (!routing.locales.includes(locale)) {
     notFound()
@@ -49,8 +51,7 @@ export default async function AppLayout({
 
   const setting = await getSetting()
 
-  // ✅ Await cookies() here
-  const cookieStore = await cookies()
+  const cookieStore = await cookies() // Await the cookies() function
   const currencyCookie = cookieStore.get('currency')?.value
 
   const currency =
@@ -81,6 +82,12 @@ export default async function AppLayout({
             </ClientProviders>
           </CurrencyProvider>
         </NextIntlClientProvider>
+
+        <script
+          type="text/javascript"
+          src="https://js.paystack.co/v1/inline.js"
+          async
+        ></script>
       </body>
     </html>
   )

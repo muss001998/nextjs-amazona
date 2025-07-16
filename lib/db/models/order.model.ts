@@ -53,6 +53,14 @@ const orderSchema = new Schema<IOrder>(
     paidAt: { type: Date },
     isDelivered: { type: Boolean, required: true, default: false },
     deliveredAt: { type: Date },
+
+    // ✅ Add this:
+    currency: {
+      code: { type: String, required: true },
+      symbol: { type: String, required: true },
+      convertRate: { type: Number, required: true },
+    },
+
     createdAt: { type: Date, default: Date.now },
   },
   {

@@ -1,6 +1,6 @@
 'use server'
 
-import { Cart, IOrderList, OrderItem, ShippingAddress } from '@/types'
+import { Cart, IOrderList, OrderItem, ShippingAddress, SiteCurrency } from '@/types'
 import { formatError, round2 } from '../utils'
 import { connectToDatabase } from '../db'
 import { auth } from '@/auth'
@@ -14,6 +14,7 @@ import Product from '../db/models/product.model'
 import User from '../db/models/user.model'
 import mongoose from 'mongoose'
 import { getSetting } from './setting.actions'
+import { cookies } from 'next/headers'
 
 // CREATE
 export const createOrder = async (clientSideCart: Cart) => {
@@ -21,11 +22,24 @@ export const createOrder = async (clientSideCart: Cart) => {
     await connectToDatabase()
     const session = await auth()
     if (!session) throw new Error('User not authenticated')
-    // recalculate price and delivery date on the server
+
+    const setting = await getSetting()
+    const cookieStore = await cookies()
+    const currencyCookie = cookieStore.get('currency')?.value
+
+
+    const currency =
+      setting.availableCurrencies.find((cur) => cur.code === currencyCookie) ??
+      setting.availableCurrencies.find((cur) => cur.code === setting.defaultCurrency.code)
+
+    if (!currency) throw new Error('Currency not found')
+
     const createdOrder = await createOrderFromCart(
       clientSideCart,
-      session.user.id!
+      session.user.id!,
+      currency
     )
+
     return {
       success: true,
       message: 'Order placed successfully',
@@ -35,13 +49,15 @@ export const createOrder = async (clientSideCart: Cart) => {
     return { success: false, message: formatError(error) }
   }
 }
+
 export const createOrderFromCart = async (
   clientSideCart: Cart,
-  userId: string
+  userId: string,
+  currency: SiteCurrency
 ) => {
   const cart = {
     ...clientSideCart,
-    ...calcDeliveryDateAndPrice({
+    ...await calcDeliveryDateAndPrice({
       items: clientSideCart.items,
       shippingAddress: clientSideCart.shippingAddress,
       deliveryDateIndex: clientSideCart.deliveryDateIndex,
@@ -58,7 +74,9 @@ export const createOrderFromCart = async (
     taxPrice: cart.taxPrice,
     totalPrice: cart.totalPrice,
     expectedDeliveryDate: cart.expectedDeliveryDate,
+    currency,
   })
+
   return await Order.create(order)
 }
 
@@ -82,6 +100,7 @@ export async function updateOrderToPaid(orderId: string) {
     return { success: false, message: formatError(err) }
   }
 }
+
 const updateProductStock = async (orderId: string) => {
   const session = await mongoose.connection.startSession()
 
@@ -116,6 +135,7 @@ const updateProductStock = async (orderId: string) => {
     throw error
   }
 }
+
 export async function deliverOrder(orderId: string) {
   try {
     await connectToDatabase()
@@ -209,9 +229,10 @@ export async function getMyOrders({
 }
 export async function getOrderById(orderId: string): Promise<IOrder> {
   await connectToDatabase()
-  const order = await Order.findById(orderId)
+  const order = await Order.findById(orderId).populate('user', 'name email')
   return JSON.parse(JSON.stringify(order))
 }
+
 
 export async function createPayPalOrder(orderId: string) {
   await connectToDatabase()
