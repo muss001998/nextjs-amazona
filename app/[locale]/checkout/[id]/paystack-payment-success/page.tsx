@@ -2,17 +2,20 @@ import Link from 'next/link';
 import { redirect, notFound } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 
-interface PageProps {
-  params: {
-    locale: string;
-    id: string;
-  };
-  searchParams: {
-    reference?: string;
-  };
+interface PageParams {
+  locale: string;
+  id: string;
 }
 
-const PaystackSuccessPage = async ({ params, searchParams }: PageProps) => {
+interface PageProps {
+  params: Promise<PageParams>;
+  searchParams: Promise<{ reference?: string }>;
+}
+
+const PaystackSuccessPage = async (props: PageProps) => {
+  const params = await props.params;
+  const searchParams = await props.searchParams;
+
   const { id, locale } = params;
   const reference = searchParams.reference;
 
