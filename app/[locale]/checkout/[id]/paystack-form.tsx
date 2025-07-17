@@ -53,12 +53,14 @@ export default function PaystackForm({
       currency,
       metadata: {
         orderId,
-        callback_url: `${process.env.NEXT_PUBLIC_SERVER_URL}/checkout/${orderId}/paystack-payment-success`, // Use NEXT_PUBLIC_SERVER_URL
+        // Optional: this is only used by Paystack's own redirect mode
+        callback_url: `${process.env.NEXT_PUBLIC_SITE_URL}/checkout/${orderId}/paystack-payment-success`,
       },
       callback: function (response: PaystackResponse) {
         console.log('✅ Paystack callback fired. Reference:', response.reference);
-        // Remove the direct window.location.href redirection
-        // window.location.href = `${window.location.origin}/checkout/${orderId}/paystack-payment-success?reference=${response.reference}`;
+
+        // ✅ Manually redirect the user to the success page (required for inline)
+        window.location.href = `/checkout/${orderId}/paystack-payment-success?reference=${response.reference}`;
       },
       onClose: function () {
         setIsLoading(false);
