@@ -1,36 +1,38 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
 
 interface Props {
-  email: string
-  orderId: string
-  priceInCents: number
-  currency: string
+  email: string;
+  orderId: string;
+  priceInCents: number;
+  currency: string;
 }
 
-// ✅ Declare types at the top
 type PaystackResponse = {
-  reference: string
-}
+  reference: string;
+};
 
 type PaystackSetupOptions = {
-  key: string
-  email: string
-  amount: number
-  currency: string
-  metadata: { orderId: string }
-  callback: (response: PaystackResponse) => void
-  onClose: () => void
-}
+  key: string;
+  email: string;
+  amount: number;
+  currency: string;
+  metadata: {
+    orderId: string;
+    callback_url?: string;
+  };
+  callback: (response: PaystackResponse) => void;
+  onClose: () => void;
+};
 
 interface PaystackWindow extends Window {
   PaystackPop: {
     setup: (options: PaystackSetupOptions) => {
-      openIframe: () => void
-    }
-  }
+      openIframe: () => void;
+    };
+  };
 }
 
 export default function PaystackForm({
@@ -39,28 +41,31 @@ export default function PaystackForm({
   priceInCents,
   currency,
 }: Props) {
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false);
 
   const handlePaystack = () => {
-    setIsLoading(true)
+    setIsLoading(true);
 
     const handler = (window as unknown as PaystackWindow).PaystackPop.setup({
       key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY!,
       email,
       amount: priceInCents,
       currency,
-      metadata: { orderId },
+      metadata: {
+        orderId,
+        callback_url: `${window.location.origin}/checkout/${orderId}/paystack-payment-success`,
+      },
       callback: function (response: PaystackResponse) {
-        alert('Payment complete! Reference: ' + response.reference)
-        window.location.href = `${window.location.origin}/checkout/${orderId}/paystack-payment-success?reference=${response.reference}`
+        console.log('✅ Paystack callback fired. Reference:', response.reference);
+        window.location.href = `${window.location.origin}/checkout/${orderId}/paystack-payment-success?reference=${response.reference}`;
       },
       onClose: function () {
-        setIsLoading(false)
+        setIsLoading(false);
       },
-    })
+    });
 
-    handler.openIframe()
-  }
+    handler.openIframe();
+  };
 
   return (
     <div className="space-y-4">
@@ -73,5 +78,5 @@ export default function PaystackForm({
         )}
       </Button>
     </div>
-  )
+  );
 }
