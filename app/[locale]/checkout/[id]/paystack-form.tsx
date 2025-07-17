@@ -52,7 +52,7 @@ export default function PaystackForm({
       metadata: { orderId },
       callback: function (response: PaystackResponse) {
         alert('Payment complete! Reference: ' + response.reference)
-        window.location.href = `/checkout/${orderId}/paystack-payment-success?reference=${response.reference}`
+        window.location.href = `${window.location.origin}/checkout/${orderId}/paystack-payment-success?reference=${response.reference}`
       },
       onClose: function () {
         setIsLoading(false)
