@@ -2,21 +2,18 @@ import Link from 'next/link';
 import { redirect, notFound } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 
-interface PageParams {
-  locale: string;
-  id: string;
-}
-
 interface PageProps {
-  params: Promise<PageParams>;
-  searchParams: Promise<{ reference?: string }>;
+  params: {
+    locale: string;
+    id: string;
+  };
+  searchParams: {
+    reference?: string;
+  };
 }
 
-const PaystackSuccessPage = async (props: PageProps) => {
-  const params = await props.params;
+const PaystackSuccessPage = async ({ params, searchParams }: PageProps) => {
   const { id, locale } = params;
-
-  const searchParams = await props.searchParams;
   const reference = searchParams.reference;
 
   if (!reference) {
@@ -39,9 +36,7 @@ const PaystackSuccessPage = async (props: PageProps) => {
       data.isSuccess === true && data.order && data.order._id === id;
 
     if (!isSuccess) {
-      //  Added notFound() here
       notFound();
-      //return redirect(`/${locale}/checkout/${id}`);
     }
 
     return (
