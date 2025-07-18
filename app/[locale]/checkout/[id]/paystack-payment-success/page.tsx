@@ -2,20 +2,12 @@ import Link from 'next/link';
 import { redirect, notFound } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 
-interface PageParams {
-  locale: string;
-  id: string;
-}
-
 interface PageProps {
-  params: Promise<PageParams>;
-  searchParams: Promise<{ reference?: string }>;
+  params: { locale: string; id: string };
+  searchParams: { reference?: string };
 }
 
-const PaystackSuccessPage = async (props: PageProps) => {
-  const params = await props.params;
-  const searchParams = await props.searchParams;
-
+const PaystackSuccessPage = async ({ params, searchParams }: PageProps) => {
   const { id, locale } = params;
   const reference = searchParams.reference;
 
@@ -30,25 +22,27 @@ const PaystackSuccessPage = async (props: PageProps) => {
     );
 
     if (!res.ok) {
-      console.error("Payment verification API failed:", res.status, res.statusText);
+      console.error('❌ Payment verification API failed:', res.status, res.statusText);
       return redirect(`/${locale}/checkout/${id}`);
     }
 
     const data = await res.json();
+
     const isSuccess =
       data.isSuccess === true && data.order && data.order._id === id;
 
     if (!isSuccess) {
+      console.warn('❌ Verification mismatch or order ID invalid:', data);
       notFound();
     }
 
     return (
       <div className='max-w-4xl w-full mx-auto space-y-8'>
-        <div className='flex flex-col gap-6 items-center '>
+        <div className='flex flex-col gap-6 items-center'>
           <h1 className='font-bold text-2xl lg:text-3xl'>
-            Thanks for your purchase
+            ✅ Thanks for your purchase
           </h1>
-          <div>We are now processing your order.</div>
+          <p>We are now processing your order.</p>
           <Button asChild>
             <Link href={`/account/orders/${id}`}>View order</Link>
           </Button>
@@ -56,7 +50,7 @@ const PaystackSuccessPage = async (props: PageProps) => {
       </div>
     );
   } catch (error) {
-    console.error("Error during payment verification:", error);
+    console.error('❌ Error during payment verification:', error);
     return redirect(`/${locale}/checkout/${id}`);
   }
 };
