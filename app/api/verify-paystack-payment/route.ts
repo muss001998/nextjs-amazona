@@ -7,20 +7,43 @@ export async function GET(req: NextRequest) {
   const reference = searchParams.get('reference')
 
   if (!reference) {
-    return NextResponse.json({ isSuccess: false, error: 'No reference provided' }, { status: 400 })
+    return NextResponse.json(
+      { isSuccess: false, error: 'No reference provided' },
+      { status: 400 }
+    )
   }
 
   try {
     // 1. Verify the transaction with Paystack
-    const res = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, {
+    const paystackUrl = `https://api.paystack.co/transaction/verify/${reference}`
+    console.log('🔍 Verifying Paystack reference:', reference)
+
+    const res = await fetch(paystackUrl, {
       headers: {
         Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
         'Content-Type': 'application/json',
       },
     })
 
-    const result = await res.json()
+    if (!res.ok) {
+      const errorText = await res.text()
+      console.error(`❌ Paystack API call failed. Status: ${res.status}`, errorText)
+      return NextResponse.json(
+        { isSuccess: false, error: 'Paystack verification API failed' },
+        { status: res.status }
+      )
+    }
+
+    let result
+    try {
+      result = await res.json()
+    } catch (jsonErr) {
+      console.error('❌ Failed to parse JSON from Paystack response:', jsonErr)
+      return NextResponse.json({ isSuccess: false, error: 'Invalid JSON from Paystack' }, { status: 500 })
+    }
+
     const data = result.data
+    console.log('✅ Paystack response data:', data)
 
     if (!data || data.status !== 'success') {
       return NextResponse.json({ isSuccess: false, error: 'Verification failed' }, { status: 400 })
@@ -33,6 +56,7 @@ export async function GET(req: NextRequest) {
     // 2. Look up the order in your database
     const order = await Order.findById(orderId).populate('user', 'email')
     if (!order) {
+      console.error('❌ Order not found for orderId:', orderId)
       return NextResponse.json({ isSuccess: false, error: 'Order not found' }, { status: 404 })
     }
 
@@ -52,13 +76,13 @@ export async function GET(req: NextRequest) {
       try {
         await sendPurchaseReceipt({ order })
       } catch (err) {
-        console.error('Email error:', err)
+        console.error('❌ Email error:', err)
       }
     }
 
     return NextResponse.json({ isSuccess: true, order })
   } catch (err) {
-    console.error('Paystack verification error:', err)
+    console.error('❌ Paystack verification unexpected error:', err)
     return NextResponse.json({ isSuccess: false, error: 'Server error' }, { status: 500 })
   }
 }
