@@ -21,7 +21,7 @@ type PaystackSetupOptions = {
   currency: string;
   metadata: {
     orderId: string;
-    callback_url?: string;
+    callback_url?: string; // Optional: this is only used by Paystack's own redirect mode
   };
   callback: (response: PaystackResponse) => void;
   onClose: () => void;
@@ -60,7 +60,8 @@ export default function PaystackForm({
         console.log('✅ Paystack callback fired. Reference:', response.reference);
 
         // ✅ Manually redirect the user to the success page (required for inline)
-        window.location.href = `/checkout/${orderId}/paystack-payment-success?reference=${response.reference}`;
+        // IMPORTANT:  Encode the reference to handle special characters in the URL
+        window.location.href = `/checkout/${orderId}/paystack-payment-success?reference=${encodeURIComponent(response.reference)}`;
       },
       onClose: function () {
         setIsLoading(false);
