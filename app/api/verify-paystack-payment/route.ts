@@ -85,7 +85,13 @@ export async function GET(req: NextRequest) {
 
     // IMPORTANT:  Redirect the user to the success page!
     console.log("✅ Payment verification successful.  Redirecting to success page");
-    return NextResponse.redirect(`/checkout/${orderId}/paystack-payment-success?reference=${encodeURIComponent(reference)}`);
+
+    // === FIX: use absolute URL ===
+    const redirectUrl = req.nextUrl.clone();
+    redirectUrl.pathname = `/checkout/${orderId}/paystack-payment-success`;
+    redirectUrl.searchParams.set('reference', reference);
+
+    return NextResponse.redirect(redirectUrl);
 
   } catch (err) {
     console.error('❌ Paystack verification unexpected error:', err);
