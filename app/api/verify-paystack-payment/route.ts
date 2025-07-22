@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
   if (!reference) {
     console.warn("⚠️ No reference provided in the URL.");
     return NextResponse.json(
-      { isSuccess: false, error: 'No reference provided' },
+      { isSuccess: false, error: 'No reference provided', order: null },
       { status: 400 }
     );
   }
@@ -29,9 +29,8 @@ export async function GET(req: NextRequest) {
     if (!res.ok) {
       const errorText = await res.text();
       console.error(`❌ Paystack API call failed. Status: ${res.status}`, errorText);
-      console.error("❌ Paystack API error details:", errorText);
       return NextResponse.json(
-        { isSuccess: false, error: 'Paystack verification API failed' },
+        { isSuccess: false, error: 'Paystack verification API failed', order: null },
         { status: res.status }
       );
     }
@@ -41,7 +40,7 @@ export async function GET(req: NextRequest) {
       result = await res.json();
     } catch (jsonErr) {
       console.error('❌ Failed to parse JSON from Paystack response:', jsonErr);
-      return NextResponse.json({ isSuccess: false, error: 'Invalid JSON from Paystack' }, { status: 500 });
+      return NextResponse.json({ isSuccess: false, error: 'Invalid JSON from Paystack', order: null }, { status: 500 });
     }
 
     const data = result.data;
@@ -49,7 +48,7 @@ export async function GET(req: NextRequest) {
 
     if (!data || data.status !== 'success') {
       console.warn("⚠️ Paystack verification failed. Data:", data);
-      return NextResponse.json({ isSuccess: false, error: 'Verification failed' }, { status: 400 });
+      return NextResponse.json({ isSuccess: false, error: 'Verification failed', order: null }, { status: 400 });
     }
 
     const orderId = data.metadata?.orderId;
@@ -60,7 +59,7 @@ export async function GET(req: NextRequest) {
     const order = await Order.findById(orderId).populate('user', 'email');
     if (!order) {
       console.error('❌ Order not found for orderId:', orderId);
-      return NextResponse.json({ isSuccess: false, error: 'Order not found' }, { status: 404 });
+      return NextResponse.json({ isSuccess: false, error: 'Order not found', order: null }, { status: 404 });
     }
 
     // 3. If not already marked as paid, mark it
@@ -83,18 +82,20 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // IMPORTANT:  Redirect the user to the success page!
-    console.log("✅ Payment verification successful.  Redirecting to success page");
-
-    // === FIX: use absolute URL ===
-    const redirectUrl = req.nextUrl.clone();
-    redirectUrl.pathname = `/checkout/${orderId}/paystack-payment-success`;
-    redirectUrl.searchParams.set('reference', reference);
-
-    return NextResponse.redirect(redirectUrl);
+    const redirectUrl = `/checkout/${orderId}/paystack-payment-success?reference=${reference}`;
+    return NextResponse.json({
+      isSuccess: true,
+      message: "Payment verification successful.",
+      redirectUrl,
+      order: {
+        _id: order._id.toString(),
+        isPaid: order.isPaid,
+        // add extra fields if you want
+      },
+    });
 
   } catch (err) {
     console.error('❌ Paystack verification unexpected error:', err);
-    return NextResponse.json({ isSuccess: false, error: 'Server error' }, { status: 500 });
+    return NextResponse.json({ isSuccess: false, error: 'Server error', order: null }, { status: 500 });
   }
 }

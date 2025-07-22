@@ -12,6 +12,18 @@ interface PageProps {
   searchParams: Promise<{ reference?: string }>;
 }
 
+interface Order {
+  _id: string;
+  isPaid: boolean;
+  // add more fields as needed
+}
+
+interface PaystackVerifyResult {
+  isSuccess?: boolean;
+  order?: Order;
+  error?: string;
+}
+
 const PaystackSuccessPage = async (props: PageProps) => {
   const params = await props.params;
   const searchParams = await props.searchParams;
@@ -20,65 +32,84 @@ const PaystackSuccessPage = async (props: PageProps) => {
   const reference = searchParams.reference;
 
   if (!reference) {
-    console.warn("⚠️ No reference provided in search params. Redirecting to checkout.");
     return redirect(`/${locale}/checkout/${id}?error=${encodeURIComponent("No payment reference provided.")}`);
   }
 
-  // Retry logic to handle potential timing issues
   const maxRetries = 3;
-  let retryCount = 0;
+  let data: PaystackVerifyResult | null = null;
+  let error: string | null = null;
+  let isSuccess = false;
 
-  while (retryCount < maxRetries) {
+  for (let retryCount = 0; retryCount < maxRetries; retryCount++) {
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_SITE_URL}/api/verify-paystack-payment?reference=${reference}`,
         { cache: 'no-store' }
       );
-
-      if (!res.ok) {
-        console.error("Payment verification API failed:", res.status, res.statusText);
-        return redirect(`/${locale}/checkout/${id}?error=${encodeURIComponent("Payment verification failed. Please try again.")}`);
+      const contentType = res.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        throw new Error("Non-JSON API response.");
       }
 
-      const data = await res.json();
+      data = await res.json();
 
-      // More robust isSuccess check
-      const isSuccess =
+      isSuccess = Boolean(
+        data &&
         data.isSuccess === true &&
         data.order &&
-        data.order._id &&
-        typeof data.order._id === 'string' && // Check if _id exists and is a string
+        typeof data.order._id === 'string' &&
         data.order._id === id &&
-        data.order.isPaid === true;
+        data.order.isPaid === true
+      );
 
-      if (isSuccess) {
-        return (
-          <div className='max-w-4xl w-full mx-auto space-y-8'>
-            <div className='flex flex-col gap-6 items-center '>
-              <h1 className='font-bold text-2xl lg:text-3xl'>
-                Thanks for your purchase
-              </h1>
-              <div>We are now processing your order.</div>
-              <Button asChild>
-                <Link href={`/account/orders/${id}`}>View order</Link>
-              </Button>
-            </div>
-          </div>
-        );
+      if (isSuccess) break;
+      await new Promise(resolve => setTimeout(resolve, 500));
+    } catch (e) {
+      if (e instanceof Error) {
+        error = e.message;
       } else {
-        console.warn("⚠️ Payment verification failed (isSuccess is false). Retrying...");
-        retryCount++;
-        await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms before retrying
+        error = "Unknown error";
       }
-    } catch (error) {
-      console.error("Error during payment verification:", error);
-      return redirect(`/${locale}/checkout/${id}?error=${encodeURIComponent("An unexpected error occurred during payment verification.")}`);
+      break;
     }
   }
 
-  // If all retries fail, redirect to checkout with an error message
-  console.error("Payment verification failed after multiple retries. Redirecting to checkout.");
-  return redirect(`/${locale}/checkout/${id}?error=${encodeURIComponent("Payment verification failed after multiple attempts. Please contact support.")}`);
+  if (isSuccess) {
+    return (
+      <div className='max-w-4xl w-full mx-auto space-y-8'>
+        <div className='flex flex-col gap-6 items-center'>
+          <h1 className='font-bold text-2xl lg:text-3xl'>
+            Thanks for your purchase
+          </h1>
+          <div>We are now processing your order.</div>
+          <Button asChild>
+            <Link href={`/account/orders/${id}`}>View order</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className='max-w-lg w-full mx-auto space-y-8 text-center mt-20'>
+      <h1 className='text-2xl font-bold text-red-500'>Payment Verification Failed</h1>
+      <p className='mb-4'>
+        {data && data.error
+          ? data.error
+          : error
+          ? error
+          : "Payment verification failed after multiple attempts. Please contact support."}
+      </p>
+      <Button asChild>
+        <Link href={`/${locale}/checkout/${id}`}>
+          Retry Checkout
+        </Link>
+      </Button>
+      <div className="mt-4 text-sm text-gray-500">
+        If you believe this is a mistake, please <a href="mailto:support@example.com" className="underline">contact support</a>.
+      </div>
+    </div>
+  );
 };
 
 export default PaystackSuccessPage;
