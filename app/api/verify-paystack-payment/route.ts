@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Order from '@/lib/db/models/order.model';
 import { sendPurchaseReceipt } from '@/emails';
+import '@/lib/db/models/user.model'; // 👈 this registers the User schema
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
