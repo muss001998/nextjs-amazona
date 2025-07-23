@@ -1,15 +1,15 @@
-import { NextRequest, NextResponse } from 'next/server'
-import Order from '@/lib/db/models/order.model'
-import { sendPurchaseReceipt } from '@/emails'
+import { NextRequest, NextResponse } from 'next/server';
+import Order from '@/lib/db/models/order.model';
+import { sendPurchaseReceipt } from '@/emails';
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url)
-  const reference = searchParams.get('reference')
+  const { searchParams } = new URL(req.url);
+  const reference = searchParams.get('reference');
 
   if (!reference) {
     console.warn("⚠️ No reference provided in the URL.");
     return NextResponse.json(
-      { isSuccess: false, error: 'No reference provided', order: null },
+      { isSuccess: false, error: 'No reference provided in the URL.', details: null, order: null },
       { status: 400 }
     );
   }
@@ -27,39 +27,77 @@ export async function GET(req: NextRequest) {
     });
 
     if (!res.ok) {
-      const errorText = await res.text();
-      console.error(`❌ Paystack API call failed. Status: ${res.status}`, errorText);
+      let errorDetails: unknown = null;
+      try {
+        errorDetails = await res.json();
+      } catch {
+        errorDetails = await res.text();
+      }
+      console.error(`❌ Paystack API call failed. Status: ${res.status}`, errorDetails);
       return NextResponse.json(
-        { isSuccess: false, error: 'Paystack verification API failed', order: null },
+        { isSuccess: false, error: 'Paystack verification API failed', details: errorDetails, order: null },
         { status: res.status }
       );
     }
 
-    let result;
+    let result: unknown;
     try {
       result = await res.json();
     } catch (jsonErr) {
       console.error('❌ Failed to parse JSON from Paystack response:', jsonErr);
-      return NextResponse.json({ isSuccess: false, error: 'Invalid JSON from Paystack', order: null }, { status: 500 });
+      return NextResponse.json(
+        { isSuccess: false, error: 'Invalid JSON from Paystack', details: jsonErr, order: null },
+        { status: 500 }
+      );
     }
 
-    const data = result.data;
+    // Type guard for result
+    if (
+      typeof result !== 'object' ||
+      result === null ||
+      !('data' in result)
+    ) {
+      console.error('❌ Invalid Paystack response structure:', result);
+      return NextResponse.json(
+        { isSuccess: false, error: 'Invalid Paystack API response', details: result, order: null },
+        { status: 500 }
+      );
+    }
+
+    // Now result is an object with 'data'
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const data = (result as { data: any }).data;
     console.log('✅ Paystack response data:', data);
 
+    // Check success status from Paystack
     if (!data || data.status !== 'success') {
       console.warn("⚠️ Paystack verification failed. Data:", data);
-      return NextResponse.json({ isSuccess: false, error: 'Verification failed', order: null }, { status: 400 });
+      return NextResponse.json(
+        { isSuccess: false, error: 'Verification failed', details: data, order: null },
+        { status: 400 }
+      );
     }
 
     const orderId = data.metadata?.orderId;
     const email = data.customer?.email;
     const pricePaid = (data.amount / 100).toFixed(2);
 
+    if (!orderId) {
+      console.error('❌ No orderId in Paystack metadata.', { data });
+      return NextResponse.json(
+        { isSuccess: false, error: 'No orderId in Paystack metadata', details: data, order: null },
+        { status: 400 }
+      );
+    }
+
     // 2. Look up the order in your database
     const order = await Order.findById(orderId).populate('user', 'email');
     if (!order) {
       console.error('❌ Order not found for orderId:', orderId);
-      return NextResponse.json({ isSuccess: false, error: 'Order not found', order: null }, { status: 404 });
+      return NextResponse.json(
+        { isSuccess: false, error: 'Order not found', details: { orderId }, order: null },
+        { status: 404 }
+      );
     }
 
     // 3. If not already marked as paid, mark it
@@ -72,16 +110,26 @@ export async function GET(req: NextRequest) {
         email_address: email,
         pricePaid,
       };
-      await order.save();
+      try {
+        await order.save();
+      } catch (err: unknown) {
+        console.error('❌ Failed to save order after payment:', err);
+        return NextResponse.json(
+          { isSuccess: false, error: 'Failed to mark order as paid', details: err, order: null },
+          { status: 500 }
+        );
+      }
 
       // 4. Send confirmation email
       try {
         await sendPurchaseReceipt({ order });
       } catch (err) {
         console.error('❌ Email error:', err);
+        // Don’t fail the request for email failure, just log it
       }
     }
 
+    // 5. Success: return order and redirect
     const redirectUrl = `/checkout/${orderId}/paystack-payment-success?reference=${reference}`;
     return NextResponse.json({
       isSuccess: true,
@@ -90,12 +138,15 @@ export async function GET(req: NextRequest) {
       order: {
         _id: order._id.toString(),
         isPaid: order.isPaid,
-        // add extra fields if you want
+        // Add extra fields if needed
       },
     });
 
-  } catch (err) {
+  } catch (err: unknown) {
     console.error('❌ Paystack verification unexpected error:', err);
-    return NextResponse.json({ isSuccess: false, error: 'Server error', order: null }, { status: 500 });
+    return NextResponse.json(
+      { isSuccess: false, error: 'Server error', details: err, order: null },
+      { status: 500 }
+    );
   }
 }
